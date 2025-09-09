@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure AD Token Utility</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h2 {
+            color: #374151;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            font-weight: 600;
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .app-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .app-card:hover {
+            border-color: #4f46e5;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.1);
+        }
+
+        .app-card.selected {
+            border-color: #4f46e5;
+            background: #eef2ff;
+        }
+
+        .app-name {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .app-id {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            color: #6b7280;
+            word-break: break-all;
+        }
+
+        .search-section {
+            margin-bottom: 30px;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #4f46e5;
+        }
+
+        .search-results {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .search-result {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f1f5f9;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .search-result:hover {
+            background-color: #f8fafc;
+        }
+
+        .search-result:last-child {
+            border-bottom: none;
+        }
+
+        .custom-section {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #4f46e5;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .auth-section {
+            display: none;
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .auth-section.show {
+            display: block;
+        }
+
+        .auth-title {
+            color: #92400e;
+            font-weight: 600;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .auth-url {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 15px;
+            word-break: break-all;
+        }
+
+        .auth-code {
+            background: #1f2937;
+            color: #fbbf24;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2em;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .auth-message {
+            color: #92400e;
+            margin-bottom: 15px;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .status.loading {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #93c5fd;
+        }
+
+        .status.success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+        }
+
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .token-section {
+            display: none;
+            background: #f0fdf4;
+            border: 2px solid #22c55e;
+            border-radius: 10px;
+            padding: 25px;
+        }
+
+        .token-section.show {
+            display: block;
+        }
+
+        .token-field {
+            margin-bottom: 20px;
+        }
+
+        .token-label {
+            font-weight: 600;
+            color: #166534;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .token-value {
+            background: #1f2937;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            word-break: break-all;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .copy-btn {
+            background: #374151;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 0.9em;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: background-color 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            background: #1f2937;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Scope checkbox styling */
+        .scope-checkbox {
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        #scopeSelector label {
+            display: block;
+            margin-bottom: 8px;
+            cursor: pointer;
+            font-size: 0.95em;
+            line-height: 1.4;
+        }
+
+        #scopeSelector label:hover {
+            background-color: #f3f4f6;
+            border-radius: 4px;
+            padding: 2px 4px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            
+            .content {
+                padding: 20px;
+            }
+            
+            .app-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Azure AD Token Utility</h1>
+            <p>Get access tokens using device code flow</p>
+        </div>
+
+        <div class="content">
+            <!-- Application Selection -->
+            <div class="section">
+                <h2>Select Application</h2>
+                
+                <!-- Top Apps -->
+                <div class="app-grid" id="topApps">
+                    {% for app in top_apps %}
+                    <div class="app-card" data-client-id="{{ app.client_id }}" data-scope="{{ app.scope }}">
+                        <div class="app-name">{{ app.name }}</div>
+                        <div class="app-id">{{ app.client_id }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Search Apps -->
+                <div class="search-section">
+                    <h3>Search All Microsoft Applications</h3>
+                    <input type="text" class="search-box" id="searchBox" placeholder="Search for applications...">
+                    <div class="search-results hidden" id="searchResults"></div>
+                </div>
+
+                <!-- Custom Client ID -->
+                <div class="custom-section">
+                    <h3>Custom Client ID</h3>
+                    <div class="form-group">
+                        <label for="customClientId">Client ID:</label>
+                        <input type="text" id="customClientId" placeholder="Enter custom client ID">
+                    </div>
+                    <div class="form-group">
+                        <label for="customScope">Scope (optional):</label>
+                        <input type="text" id="customScope" placeholder="https://graph.microsoft.com/.default offline_access openid">
+                    </div>
+                    <!-- Tenant ID Input for SharePoint Scopes -->
+                    <div class="form-group" id="tenantIdGroup" style="display:none;">
+                        <label for="tenantIdInput">Tenant ID (for SharePoint scopes):</label>
+                        <input type="text" id="tenantIdInput" placeholder="Enter your tenant ID (e.g., contoso.onmicrosoft.com)">
+                        <small style="color: #6b7280; font-size: 0.9em;">Required for SharePoint scopes that contain $TENANTID placeholder</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Get Token Button -->
+            <button class="btn" id="getTokenBtn" onclick="getDeviceCode()">Get Access Token</button>
+
+            <!-- Status Messages -->
+            <div id="statusContainer"></div>
+
+            <!-- Authentication Section -->
+            <div class="auth-section" id="authSection">
+                <div class="auth-title">🔐 Browser Authentication Required</div>
+                <div class="auth-message" id="authMessage"></div>
+                <div class="auth-url" id="authUrl"></div>
+                <div class="auth-code" id="authCode"></div>
+                <div class="auth-message">Complete the authentication in your browser, then the token will be retrieved automatically.</div>
+            </div>
+
+            <!-- Token Results -->
+            <div class="token-section" id="tokenSection">
+                <h2>✅ Access Token Acquired!</h2>
+                
+                <div class="token-field">
+                    <label class="token-label">Access Token:</label>
+                    <div class="token-value" id="accessToken"></div>
+                    <button class="copy-btn" onclick="copyToClipboard('accessToken')">Copy</button>
+                </div>
+
+                <div class="token-field">
+                    <label class="token-label">Refresh Token:</label>
+                    <div class="token-value" id="refreshToken"></div>
+                    <button class="copy-btn" onclick="copyToClipboard('refreshToken')">Copy</button>
+                </div>
+
+                <div class="token-field">
+                    <label class="token-label">ID Token:</label>
+                    <div class="token-value" id="idToken"></div>
+                    <button class="copy-btn" onclick="copyToClipboard('idToken')">Copy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSessionId = null;
+        let pollingInterval = null;
+
+        // Top apps selection
+        document.querySelectorAll('.app-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.app-card').forEach(c => c.classList.remove('selected'));
+                this.classList.add('selected');
+                
+                // Fill the custom client ID form
+                const clientId = this.dataset.clientId;
+                const scope = this.dataset.scope;
+                const appName = this.querySelector('.app-name').textContent;
+                
+                document.getElementById('customClientId').value = clientId;
+                document.getElementById('customScope').value = scope;
+                
+                // Store selected app
+                window.selectedApp = {
+                    name: appName,
+                    client_id: clientId,
+                    scope: scope
+                };
+                
+                // Show selection feedback
+                showStatus('Application selected: ' + appName + ' (Client ID: ' + clientId + ')', 'success');
+            });
+        });
+
+        // Search functionality
+        let searchTimeout;
+        document.getElementById('searchBox').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            
+            if (query.length < 2) {
+                document.getElementById('searchResults').classList.add('hidden');
+                return;
+            }
+
+            searchTimeout = setTimeout(() => {
+                searchApps(query);
+            }, 300);
+        });
+
+        async function searchApps(query) {
+            try {
+                const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+                const results = await response.json();
+                displaySearchResults(results);
+            } catch (error) {
+                console.error('Search error:', error);
+            }
+        }
+
+        function displaySearchResults(results) {
+            const container = document.getElementById('searchResults');
+            container.innerHTML = '';
+            
+            if (results.length === 0) {
+                container.innerHTML = '<div class="search-result">No applications found</div>';
+            } else {
+                results.forEach(app => {
+                    const div = document.createElement('div');
+                    div.className = 'search-result';
+                    div.innerHTML = `
+                        <div class="app-name">${app.name}</div>
+                        <div class="app-id">${app.client_id}</div>
+                    `;
+                    div.addEventListener('click', () => selectApp(app));
+                    container.appendChild(div);
+                });
+            }
+            
+            container.classList.remove('hidden');
+        }
+
+        function selectApp(app) {
+            // Clear other selections
+            document.querySelectorAll('.app-card').forEach(c => c.classList.remove('selected'));
+            document.getElementById('searchResults').classList.add('hidden');
+            document.getElementById('searchBox').value = '';
+            
+            // Fill the custom client ID form
+            document.getElementById('customClientId').value = app.client_id;
+            document.getElementById('customScope').value = app.scope || 'https://graph.microsoft.com/.default offline_access openid';
+            
+            // Store selected app
+            window.selectedApp = app;
+            
+            // Show selection feedback
+            showStatus('Application selected: ' + app.name + ' (Client ID: ' + app.client_id + ')', 'success');
+        }
+
+        function getSelectedApp() {
+            // Check for custom client ID first (this will be filled when selecting from search)
+            const customClientId = document.getElementById('customClientId').value.trim();
+            if (customClientId) {
+                const customScope = document.getElementById('customScope').value.trim() || 
+                    'https://graph.microsoft.com/.default offline_access openid';
+                return {
+                    client_id: customClientId,
+                    scope: customScope,
+                    name: window.selectedApp ? window.selectedApp.name : 'Custom App'
+                };
+            }
+
+            // Check for top app selection
+            const selectedCard = document.querySelector('.app-card.selected');
+            if (selectedCard) {
+                return {
+                    client_id: selectedCard.dataset.clientId,
+                    scope: selectedCard.dataset.scope,
+                    name: selectedCard.querySelector('.app-name').textContent
+                };
+            }
+
+            return null;
+        }
+
+        async function getDeviceCode() {
+            const app = getSelectedApp();
+            if (!app) {
+                showStatus('Please select an application or enter a custom client ID', 'error');
+                return;
+            }
+
+            showStatus('Requesting device code...', 'loading');
+            document.getElementById('getTokenBtn').disabled = true;
+
+            try {
+                const response = await fetch('/api/device-code', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        client_id: app.client_id,
+                        scope: app.scope
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    currentSessionId = data.session_id;
+                    showAuthSection(data);
+                    startPolling();
+                } else {
+                    showStatus('Error: ' + data.error, 'error');
+                    document.getElementById('getTokenBtn').disabled = false;
+                }
+            } catch (error) {
+                showStatus('Network error: ' + error.message, 'error');
+                document.getElementById('getTokenBtn').disabled = false;
+            }
+        }
+
+        function showAuthSection(data) {
+            document.getElementById('authSection').classList.add('show');
+            document.getElementById('authUrl').textContent = data.verification_uri;
+            document.getElementById('authCode').textContent = data.user_code;
+            document.getElementById('authMessage').textContent = data.message;
+            
+            // Auto-open the URL
+            window.open(data.verification_uri, '_blank');
+        }
+
+        function startPolling() {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+            }
+
+            pollingInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/api/poll-token/${currentSessionId}`);
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        if (data.status === 'pending') {
+                            showStatus('Waiting for authentication...', 'loading');
+                        } else {
+                            // Token received
+                            clearInterval(pollingInterval);
+                            showTokenResults(data);
+                            showStatus('Access token acquired successfully!', 'success');
+                        }
+                    } else {
+                        clearInterval(pollingInterval);
+                        showStatus('Error: ' + data.error, 'error');
+                        document.getElementById('getTokenBtn').disabled = false;
+                        document.getElementById('authSection').classList.remove('show');
+                    }
+                } catch (error) {
+                    clearInterval(pollingInterval);
+                    showStatus('Polling error: ' + error.message, 'error');
+                    document.getElementById('getTokenBtn').disabled = false;
+                    document.getElementById('authSection').classList.remove('show');
+                }
+            }, 5000); // Poll every 5 seconds
+        }
+
+        function showTokenResults(tokenData) {
+            document.getElementById('accessToken').textContent = tokenData.access_token || '<none>';
+            document.getElementById('refreshToken').textContent = tokenData.refresh_token || '<none>';
+            document.getElementById('idToken').textContent = tokenData.id_token || '<none>';
+            
+            document.getElementById('tokenSection').classList.add('show');
+            document.getElementById('authSection').classList.remove('show');
+            document.getElementById('getTokenBtn').disabled = false;
+        }
+
+        function showStatus(message, type) {
+            const container = document.getElementById('statusContainer');
+            container.innerHTML = `<div class="status ${type}">${message}</div>`;
+            
+            if (type !== 'loading') {
+                setTimeout(() => {
+                    container.innerHTML = '';
+                }, 5000);
+            }
+        }
+
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            
+            if (text === '<none>') {
+                return;
+            }
+
+            // Try modern clipboard API first
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showCopySuccess(element);
+                }).catch(err => {
+                    console.error('Modern clipboard API failed:', err);
+                    fallbackCopyTextToClipboard(text, element);
+                });
+            } else {
+                // Fallback for non-HTTPS or older browsers
+                fallbackCopyTextToClipboard(text, element);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text, element) {
+            // Create a temporary textarea element
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.position = "fixed";
+            textArea.style.left = "-999999px";
+            textArea.style.top = "-999999px";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showCopySuccess(element);
+                } else {
+                    showCopyError(element);
+                }
+            } catch (err) {
+                console.error('Fallback copy failed:', err);
+                showCopyError(element);
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        function showCopySuccess(element) {
+            const btn = element.nextElementSibling;
+            const originalText = btn.textContent;
+            btn.textContent = 'Copied!';
+            btn.style.background = '#10b981';
+            
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.background = '#374151';
+            }, 2000);
+        }
+
+        function showCopyError(element) {
+            const btn = element.nextElementSibling;
+            const originalText = btn.textContent;
+            btn.textContent = 'Failed';
+            btn.style.background = '#ef4444';
+            
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.background = '#374151';
+            }, 2000);
+        }
+
+        // Scope fetching and selector logic
+        async function fetchAndShowScopes(clientId) {
+            const tenantIdGroup = document.getElementById('tenantIdGroup');
+            tenantIdGroup.style.display = 'none';
+
+            if (!clientId) return;
+            try {
+                const response = await fetch(`/api/scopes/${clientId}`);
+                const scopes = await response.json();
+                if (Array.isArray(scopes) && scopes.length > 0) {
+                    // Check if any scopes contain $TENANTID placeholder
+                    const hasTenantScopes = scopes.some(scope => scope.includes('$TENANTID'));
+                    if (hasTenantScopes) {
+                        tenantIdGroup.style.display = '';
+                    }
+                }
+            } catch (e) {
+                // ignore errors
+            }
+        }
+
+        function getScopeMode() {
+            const mode = document.querySelector('input[name="scopeMode"]:checked');
+            return mode ? mode.value : 'replace';
+        }
+
+        function clearScopeSelection() {
+            // Uncheck all checkboxes
+            document.querySelectorAll('.scope-checkbox').forEach(cb => {
+                cb.checked = false;
+            });
+            showStatus('Scope selection cleared.', 'success');
+        }
+
+        // Hook into app selection
+        const oldSelectApp = window.selectApp;
+        window.selectApp = function(app) {
+            oldSelectApp(app);
+            fetchAndShowScopes(app.client_id);
+        };
+
+        // Hook into top app selection
+        const topAppCards = document.querySelectorAll('.app-card');
+        topAppCards.forEach(card => {
+            card.addEventListener('click', function() {
+                fetchAndShowScopes(this.dataset.clientId);
+            });
+        });
+
+        // Close search results when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.search-section')) {
+                document.getElementById('searchResults').classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html> 
