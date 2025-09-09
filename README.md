@@ -13,7 +13,7 @@ A comprehensive utility for obtaining Azure AD access tokens using the Device Co
 - **Color-coded Output**: Clear visual feedback with colored terminal output
 - **Enhanced UX**: Clear browser action instructions and Enter key prompts
 
-<img width="1158" height="811" alt="image" src="https://github.com/user-attachments/assets/b15c0d0f-01ec-4578-8b6c-f3017378fcdd" />
+<img width="1158" height="811" alt="CLI" src="https://github.com/user-attachments/assets/8f065132-e625-4910-ae50-2dafeb41a7f1" />
 
 
 ### 🌐 Web UI Version (`web_app.py`)
@@ -23,7 +23,7 @@ A comprehensive utility for obtaining Azure AD access tokens using the Device Co
 - **Copy to Clipboard**: One-click copying of tokens
 - **Mobile Responsive**: Works on desktop and mobile devices
 
-<img width="656" height="903" alt="image" src="https://github.com/user-attachments/assets/8a22c3b1-6692-42e6-9cad-2610e8fe768e" />
+<img width="656" height="903" alt="Web" src="https://github.com/user-attachments/assets/515e2c00-a988-4e59-bb0f-bd4f2fe3fd64" />
 
 
 ## Top 4 Microsoft Applications
@@ -94,6 +94,7 @@ This utility is provided as-is for educational and development purposes.
 ## Contributing
 
 Feel free to submit issues and enhancement requests! 
+
 
 
 
